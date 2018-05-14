@@ -65,11 +65,8 @@ ui <- navbarPage(
              
              # Show a plot of the generated distribution
              mainPanel(
-               textOutput("quiz1weight"),
-               textOutput("quiz2weight"),
-               textOutput("quiz3weight"),
-               textOutput("AT1weight"),
-               textOutput("AT2weight"),
+               uiOutput("weights"),
+               hr(),
                
                plotOutput("targetPlot")
              )
@@ -92,7 +89,7 @@ ui <- navbarPage(
       p(),
       
       "For bug reports and feature requests, please raise an issue at ",
-      a("this github repository", href = "https://github.com/Lingtax/PlanningProgressDashboard/issues/new")
+      a("this github repository", href = "https://github.com/Lingtax/GradeTracker/issues/new")
     )
   )
 )
@@ -101,7 +98,20 @@ ui <- navbarPage(
 # Define server logic 
 server <- function(input, output) {
    
-  weights <-  reactive({})
+  weights <-  reactive({
+    list(quiz1weight = input$quiz1 / 9 * 6,
+         quiz2weight = input$quiz2 / 9 * 6,
+         quiz3weight = input$quiz3 /12 * 8,
+         examweight = input$exam / 100 * 30,
+         at1weight = input$at1/100 * 20,
+         at2weight = input$at2/100 * 20
+         )
+    })
+  cumsum <- reactive({sum(unlist(weights()))})
+  
+  cumsum1 <- renderText(cumsum)
+  
+  output$weights <- renderUI({weights()})
    output$targetPlot <- renderPlot({
      
      # df <- data.frame(Series = factor(c("Current", "Current", "Target", "Target", "Projected", "Projected"), levels = c("Current", "Target", "Projected")),

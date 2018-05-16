@@ -46,6 +46,7 @@ ui <- navbarPage(
                
                hr(),
                h4("Skills Assessment"),
+               p("For accurate results, enter scores after late penalties"),
                numericInput(
                  "at1",
                  "AT1 (%):",
@@ -65,9 +66,9 @@ ui <- navbarPage(
              
              # Show a plot of the generated distribution
              mainPanel(
-               uiOutput("weights"),
-               hr(),
-               
+               #uiOutput("weights"),
+               #hr(),
+               textOutput("statement"),
                plotOutput("targetPlot")
              )
            )),
@@ -94,37 +95,77 @@ ui <- navbarPage(
   )
 )
 
-         
+
 # Define server logic 
 server <- function(input, output) {
-   
-  weights <-  reactive({
-    list(quiz1weight = input$quiz1 / 9 * 6,
-         quiz2weight = input$quiz2 / 9 * 6,
-         quiz3weight = input$quiz3 /12 * 8,
-         examweight = input$exam / 100 * 30,
-         at1weight = input$at1/100 * 20,
-         at2weight = input$at2/100 * 20
-         )
-    })
-  cumsum <- reactive({sum(unlist(weights()))})
   
-  cumsum1 <- renderText(cumsum)
+  # If NA treat as 0 
+  # Count latest non-0 response as time-location in trimester.
+  week <- reactive({ifelse(input$exam>0, 13, 
+                           ifelse(input$at2>0, 12, 
+                                  ifelse(input$quiz3>0, 11,
+                                         ifelse(input$at1>0, 9,
+                                                ifelse(input$quiz2>0, 7,
+                                                       ifelse(input$quiz1>0, 4,0
+                                                       ))))))
+  })
+  
+  denom <- reactive({ifelse(input$exam>0, 100, 
+                            ifelse(input$at2>0, 70, 
+                                   ifelse(input$quiz3>0, 40,
+                                          ifelse(input$at1>0, 32,
+                                                 ifelse(input$quiz2>0, 12,
+                                                        ifelse(input$quiz1>0, 6,0
+                                                        ))))))
+    })
+  
+  weights <-
+    reactive({
+      list(
+        quiz1weight = round(input$quiz1 / 9 * 6, 2),
+        quiz2weight = round(input$quiz2 / 9 * 6, 2),
+        quiz3weight = round(input$quiz3 / 12 * 8, 2),
+        examweight  = round(input$exam / 100 * 30, 2),
+        at1weight   = round(input$at1 / 100 * 20, 2),
+        at2weight   = round(input$at2 / 100 * 20, 2)
+      )
+    })
+  
+  output$statement <- renderText({
+    paste(
+      "The entered grades amount to ",
+      sum(
+        weights()$quiz1weight,
+        weights()$quiz2weight,
+        weights()$quiz3weight,
+        weights()$examweight,
+        weights()$at1weight,
+        weights()$at2weight
+      ),
+      "% out of the ",
+      denom(),
+      "% available so far. "
+    )
+  })
+  
   
   output$weights <- renderUI({weights()})
-   output$targetPlot <- renderPlot({
-     
-     # df <- data.frame(Series = factor(c("Current", "Current", "Target", "Target", "Projected", "Projected"), levels = c("Current", "Target", "Projected")),
-     #                  Date = c(input$Start_date, Sys.Date(), input$Start_date, input$Prog_target_date, Sys.Date(), prog()$proj_date),
-     #                  n = c(0, input$Prog_current_n, 0, input$Prog_target_n, input$Prog_current_n, input$Prog_target_n)
-     # )
-     # 
-     # ggplot(df, aes(Date, n, col=Series, linetype=Series)) + geom_line(cex = 1) +
-     #   scale_linetype_manual(values = c("solid", "dotted", "dashed")) + 
-     #   scale_colour_manual(values = c("Black","Blue", "Red")) +
-     #   geom_hline(yintercept = input$Prog_target_n, linetype="dashed") +
-     #   theme_classic() 
-   })
+  
+  
+  
+  output$targetPlot <- renderPlot({
+    
+    # df <- data.frame(Series = factor(c("Current", "Current", "Target", "Target", "Projected", "Projected"), levels = c("Current", "Target", "Projected")),
+    #                  Date = c(input$Start_date, Sys.Date(), input$Start_date, input$Prog_target_date, Sys.Date(), prog()$proj_date),
+    #                  n = c(0, input$Prog_current_n, 0, input$Prog_target_n, input$Prog_current_n, input$Prog_target_n)
+    # )
+    # 
+    # ggplot(df, aes(Date, n, col=Series, linetype=Series)) + geom_line(cex = 1) +
+    #   scale_linetype_manual(values = c("solid", "dotted", "dashed")) + 
+    #   scale_colour_manual(values = c("Black","Blue", "Red")) +
+    #   geom_hline(yintercept = input$Prog_target_n, linetype="dashed") +
+    #   theme_classic() 
+  })
 }
 
 # Run the application 

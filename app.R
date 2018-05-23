@@ -132,7 +132,7 @@ server <- function(input, output) {
         quiz3weight = round(input$quiz3 / 12 * 8, 2),
         #examweight  = round(input$exam / 100 * 30, 2),
         at1weight   = round(input$at1 / 100 * 20, 2),
-        at2weight   = round(input$at2 / 100 * 20, 2)
+        at2weight   = round(input$at2 / 100 * 30, 2)
       )
     })
   

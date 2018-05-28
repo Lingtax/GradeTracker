@@ -6,6 +6,7 @@ ui <- navbarPage(
   
   
   tabPanel("Tracker",
+           tags$head(includeHTML(("g_analytics.html"))), # google analytics
            # Sidebar ----
            sidebarLayout(
              sidebarPanel(
